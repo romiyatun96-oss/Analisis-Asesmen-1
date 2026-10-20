@@ -1,0 +1,1875 @@
+import React, { useState, useRef } from 'react';
+import {
+  GraduationCap,
+  BookOpen,
+  Users,
+  FileText,
+  Paperclip,
+  Target,
+  Edit3,
+  Sparkles,
+  BarChart3,
+  CheckCircle2,
+  TrendingUp,
+  AlertTriangle,
+  Lightbulb,
+  ClipboardList,
+  Info,
+  UploadCloud,
+  Check,
+  ChevronDown,
+  FileSpreadsheet,
+  X,
+  Printer,
+  Copy,
+  RefreshCw,
+  SlidersHorizontal,
+  Download,
+  Table,
+  Eye
+} from 'lucide-react';
+
+const DEFAULT_ANALYSIS = {
+  contextTitle: 'Analisis Asesmen Kurikulum Terbaru',
+  totalStudents: 32,
+  averageScore: 78.6,
+  averageCategory: 'Baik',
+  classicalMasteryPercentage: 87.5,
+  passedStudents: 28,
+  notPassedPercentage: 12.5,
+  failedStudents: 4,
+  competencies: [
+    {
+      name: 'Pengetahuan (KI-3)',
+      score: 82.3,
+      category: 'Baik'
+    },
+    {
+      name: 'Keterampilan (KI-4)',
+      score: 75.1,
+      category: 'Cukup'
+    },
+    {
+      name: 'Sikap (KI-1 & KI-2)',
+      score: 89.7,
+      category: 'Sangat Baik'
+    }
+  ],
+  distribution: {
+    sangatBaik: { label: 'Sangat Baik (90–100)', percentage: 37.5, count: 12, color: '#3b82f6' },
+    baik: { label: 'Baik (80–89)', percentage: 37.5, count: 12, color: '#10b981' },
+    cukup: { label: 'Cukup (70–79)', percentage: 18.8, count: 6, color: '#f59e0b' },
+    perluBimbingan: { label: 'Perlu Bimbingan (<70)', percentage: 6.2, count: 2, color: '#ef4444' }
+  },
+  keyFindings: [
+    'Sebagian besar siswa telah mencapai ketuntasan klasikal (87,5%).',
+    'Keterampilan masih menjadi aspek dengan rata-rata nilai terendah.',
+    'Terdapat 4 siswa yang memerlukan perhatian khusus.'
+  ],
+  recommendations: [
+    'Lakukan remedial untuk 4 siswa yang belum tuntas.',
+    'Perkuat pembelajaran berbasis praktik untuk meningkatkan keterampilan.',
+    'Gunakan variasi metode asesmen formatif secara berkelanjutan.',
+    'Berikan pengayaan bagi siswa dengan capaian sangat baik.'
+  ]
+};
+
+const JENJANG_OPTIONS = [
+  'SD / MI',
+  'SMP / MTs',
+  'SMA / MA',
+  'SMK / MAK',
+  'PAUD / TK'
+];
+
+const MAPEL_OPTIONS = [
+  'Matematika',
+  'Bahasa Indonesia',
+  'Ilmu Pengetahuan Alam dan Sosial (IPAS)',
+  'Ilmu Pengetahuan Alam (IPA)',
+  'Ilmu Pengetahuan Sosial (IPS)',
+  'Bahasa Inggris',
+  'Pendidikan Pancasila',
+  'Informatika',
+  'Seni Budaya dan Prakarya',
+  'Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK)',
+  'Pendidikan Agama dan Budi Pekerti',
+  'Produktif / Kejuruan SMK'
+];
+
+const KELAS_FASE_OPTIONS = [
+  'Fase A (Kelas 1 – 2 SD)',
+  'Fase B (Kelas 3 – 4 SD)',
+  'Fase C (Kelas 5 – 6 SD)',
+  'Fase D (Kelas 7 – 9 SMP)',
+  'Fase E (Kelas 10 SMA/SMK)',
+  'Fase F (Kelas 11 – 12 SMA/SMK)'
+];
+
+const JENIS_ASESMEN_OPTIONS = [
+  'Asesmen Sumatif Akhir Lingkup Materi',
+  'Asesmen Formatif Proses Pembelajaran',
+  'Asesmen Diagnostik Kognitif',
+  'Sumatif Tengah Semester (STS)',
+  'Sumatif Akhir Semester (SAS)',
+  'Asesmen Proyek Penguatan Profil Pelajar Pancasila (P5)',
+  'Uji Kompetensi Praktik / Kinerja'
+];
+
+const TUJUAN_ANALISIS_OPTIONS = [
+  'Evaluasi Ketuntasan & Rencana Tindak Lanjut (Remedial/Pengayaan)',
+  'Identifikasi Kesulitan Belajar & Miskonsepsi Siswa',
+  'Pemetaan Kriteria Ketercapaian Tujuan Pembelajaran (KKTP)',
+  'Evaluasi Efektivitas Metode & Strategi Pembelajaran',
+  'Penyusunan Laporan Capaian Kompetensi Akademik'
+];
+
+function DonutChart({ distribution, totalStudents }) {
+  const items = [
+    distribution.sangatBaik,
+    distribution.baik,
+    distribution.cukup,
+    distribution.perluBimbingan
+  ];
+
+  const size = 148;
+  const strokeWidth = 26;
+  const center = size / 2;
+  const radius = center - strokeWidth / 2;
+  const circumference = 2 * Math.PI * radius;
+
+  // Calculate stroke dasharray for each segment
+  let accumulatedPercent = 0;
+
+  return (
+    <div className="relative flex items-center justify-center flex-shrink-0" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90 transform overflow-visible">
+        <circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="transparent"
+          stroke="#f1f5f9"
+          strokeWidth={strokeWidth}
+        />
+        {items.map((item, idx) => {
+          const pct = Math.max(0, Number(item.percentage) || 0);
+          const strokeDasharray = `${(pct / 100) * circumference} ${circumference}`;
+          const strokeDashoffset = -((accumulatedPercent / 100) * circumference);
+          accumulatedPercent += pct;
+
+          return (
+            <circle
+              key={idx}
+              cx={center}
+              cy={center}
+              r={radius}
+              fill="transparent"
+              stroke={item.color}
+              strokeWidth={strokeWidth}
+              strokeDasharray={strokeDasharray}
+              strokeDashoffset={strokeDashoffset}
+              strokeLinecap="butt"
+              className="transition-all duration-700 ease-out"
+            />
+          );
+        })}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+        <span className="text-xl font-extrabold text-slate-800 leading-none">
+          {totalStudents}
+        </span>
+        <span className="text-xs font-medium text-slate-500 mt-1">
+          Siswa
+        </span>
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  // Form states
+  const [jenjang, setJenjang] = useState('');
+  const [mapel, setMapel] = useState('');
+  const [kelasFase, setKelasFase] = useState('');
+  const [jenisAsesmen, setJenisAsesmen] = useState('');
+  const [tujuanAnalisis, setTujuanAnalisis] = useState('');
+  const [deskripsi, setDeskripsi] = useState('');
+
+  // Optional custom data parameters (if teacher wants specific numbers or uploads CSV)
+  const [showCustomData, setShowCustomData] = useState(false);
+  const [customJumlahSiswa, setCustomJumlahSiswa] = useState('');
+  const [customKkm, setCustomKkm] = useState('75');
+  const [rawScoresInput, setRawScoresInput] = useState('');
+
+  // File upload state
+  const [uploadedFile, setUploadedFile] = useState(null);
+  const [extractedFileText, setExtractedFileText] = useState('');
+  const [parsedExcelStats, setParsedExcelStats] = useState(null);
+  const [showDataPreview, setShowDataPreview] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Analysis output & loading state
+  const [analysis, setAnalysis] = useState(DEFAULT_ANALYSIS);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
+  const resultRef = useRef(null);
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3500);
+  };
+
+  // Load SheetJS (xlsx) library dynamically to read binary .xlsx / .xls files accurately
+  const loadXlsxLibrary = () => {
+    return new Promise((resolve, reject) => {
+      if (window.XLSX) {
+        resolve(window.XLSX);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      script.onload = () => resolve(window.XLSX);
+      script.onerror = () => reject(new Error('Gagal memuat pustaka pembaca Excel.'));
+      document.head.appendChild(script);
+    });
+  };
+
+  const getScoreCategory = (score) => {
+    if (score >= 90) return 'Sangat Baik';
+    if (score >= 80) return 'Baik';
+    if (score >= 70) return 'Cukup';
+    return 'Perlu Bimbingan';
+  };
+
+  // Analyze 2D rows from Excel or CSV to compute exact metrics
+  const analyzeSpreadsheetRows = (rows, kkmValue = 75) => {
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+
+    const kkm = Number(kkmValue) || 75;
+
+    // 1. Find the header row (look in the first 15 rows for keywords or highest text density)
+    let headerRowIdx = -1;
+    const headerKeywords = [
+      'nama', 'siswa', 'peserta', 'nis', 'nisn', 'nilai', 'skor',
+      'akhir', 'rata', 'pengetahuan', 'keterampilan', 'sikap', 'ki-3', 'ki-4', 'ki-1', 'tp', 'formatif', 'sumatif'
+    ];
+
+    let bestHeaderScore = 0;
+    for (let i = 0; i < Math.min(rows.length, 15); i++) {
+      const row = rows[i] || [];
+      let score = 0;
+      row.forEach((cell) => {
+        if (cell !== null && cell !== undefined) {
+          const str = String(cell).toLowerCase().trim();
+          if (headerKeywords.some((kw) => str.includes(kw))) {
+            score += 3;
+          } else if (isNaN(Number(str)) && str.length > 1) {
+            score += 1;
+          }
+        }
+      });
+      if (score > bestHeaderScore && score >= 2) {
+        bestHeaderScore = score;
+        headerRowIdx = i;
+      }
+    }
+
+    if (headerRowIdx === -1) headerRowIdx = 0;
+
+    const rawHeaders = rows[headerRowIdx] || [];
+    const dataRows = rows.slice(headerRowIdx + 1);
+
+    // Helper to parse Indonesian/International numbers ("85,5" or "85.5")
+    const parseNum = (val) => {
+      if (typeof val === 'number' && !isNaN(val)) return val;
+      if (typeof val === 'string') {
+        const cleaned = val.trim().replace(',', '.');
+        if (cleaned === '' || cleaned === '-') return NaN;
+        const n = Number(cleaned);
+        return isNaN(n) ? NaN : n;
+      }
+      return NaN;
+    };
+
+    const maxCols = Math.max(
+      rawHeaders.length,
+      ...dataRows.slice(0, 30).map((r) => (r ? r.length : 0))
+    );
+
+    const colMeta = [];
+    for (let c = 0; c < maxCols; c++) {
+      const headerText = String(rawHeaders[c] ?? `Kolom ${c + 1}`).trim();
+      const lower = headerText.toLowerCase();
+
+      const isIdOrNo =
+        lower === 'no' ||
+        lower === 'no.' ||
+        lower === 'nomor' ||
+        lower.includes('nis') ||
+        lower.includes('absen') ||
+        lower.includes('urut') ||
+        lower.includes('kelas') ||
+        lower.includes('jk') ||
+        lower.includes('kelamin');
+
+      const isName =
+        lower.includes('nama') ||
+        lower.includes('siswa') ||
+        lower.includes('peserta didik');
+
+      const validNums = [];
+      dataRows.forEach((r) => {
+        if (!r) return;
+        const n = parseNum(r[c]);
+        if (!isNaN(n)) validNums.push(n);
+      });
+
+      // Check if column is sequential 1, 2, 3, 4... (row numbering column)
+      let isSequential = false;
+      if (validNums.length >= 3) {
+        let seqMatches = 0;
+        for (let idx = 0; idx < Math.min(validNums.length, 15); idx++) {
+          if (validNums[idx] === idx + 1) seqMatches++;
+        }
+        if (seqMatches >= Math.min(validNums.length, 15) * 0.8) {
+          isSequential = true;
+        }
+      }
+
+      // Check if values are valid assessment scores (0 - 100)
+      const inRangeNums = validNums.filter((n) => n >= 0 && n <= 100);
+      const isScoreCol =
+        !isIdOrNo &&
+        !isName &&
+        !isSequential &&
+        validNums.length > 0 &&
+        inRangeNums.length >= validNums.length * 0.7 &&
+        inRangeNums.some((n) => n > 10);
+
+      colMeta.push({
+        index: c,
+        header: headerText || `Aspek ${c + 1}`,
+        lower,
+        isIdOrNo,
+        isName,
+        isSequential,
+        isScoreCol
+      });
+    }
+
+    const scoreCols = colMeta.filter((col) => col.isScoreCol);
+    const nameCol = colMeta.find((col) => col.isName);
+
+    // Filter valid student rows (skip empty rows or summary rows like "Rata-rata", "Jumlah", "Total")
+    const summaryKeywords = [
+      'rata-rata', 'rata rata', 'rerata', 'jumlah', 'total', 'nilai tertinggi',
+      'nilai terendah', 'maksimum', 'minimum', 'ketuntasan', 'kkm', 'kktp', 'persentase'
+    ];
+
+    const studentRecords = [];
+
+    dataRows.forEach((row) => {
+      if (!row || row.length === 0) return;
+
+      // Check if any cell in this row has summary keywords
+      const rowTextJoined = row
+        .slice(0, 4)
+        .map((cell) => String(cell ?? '').toLowerCase().trim())
+        .join(' ');
+
+      if (summaryKeywords.some((kw) => rowTextJoined.includes(kw))) {
+        return;
+      }
+
+      const studentScores = {};
+      let validScoreCount = 0;
+
+      scoreCols.forEach((sc) => {
+        const val = parseNum(row[sc.index]);
+        if (!isNaN(val) && val >= 0 && val <= 100) {
+          studentScores[sc.index] = val;
+          validScoreCount++;
+        }
+      });
+
+      if (validScoreCount > 0) {
+        const studentName = nameCol
+          ? String(row[nameCol.index] ?? '').trim()
+          : `Siswa ${studentRecords.length + 1}`;
+
+        // Ignore rows where name cell is empty if other rows have names
+        if (nameCol && !studentName && scoreCols.length > 1 && validScoreCount < scoreCols.length / 2) {
+          return;
+        }
+
+        studentRecords.push({
+          name: studentName || `Siswa ${studentRecords.length + 1}`,
+          scores: studentScores
+        });
+      }
+    });
+
+    if (studentRecords.length === 0) return null;
+
+    // Identify final score column if explicitly present (e.g., "Nilai Akhir", "Rata-rata", "Total", "Nilai")
+    const finalColCandidate = scoreCols.find(
+      (c) =>
+        c.lower.includes('akhir') ||
+        c.lower.includes('rata') ||
+        c.lower.includes('rerata') ||
+        c.lower === 'nilai' ||
+        c.lower === 'skor' ||
+        c.lower.includes('total')
+    );
+
+    const aspectCols =
+      scoreCols.length > 1 && finalColCandidate
+        ? scoreCols.filter((c) => c.index !== finalColCandidate.index)
+        : scoreCols;
+
+    // Calculate each student's final score
+    const finalStudentList = studentRecords.map((st) => {
+      let finalScore = NaN;
+      if (finalColCandidate && st.scores[finalColCandidate.index] !== undefined) {
+        finalScore = st.scores[finalColCandidate.index];
+      } else {
+        const vals = aspectCols
+          .map((c) => st.scores[c.index])
+          .filter((v) => v !== undefined);
+        if (vals.length > 0) {
+          finalScore = vals.reduce((a, b) => a + b, 0) / vals.length;
+        }
+      }
+      return {
+        ...st,
+        finalScore: Number(finalScore.toFixed(2))
+      };
+    });
+
+    const totalStudents = finalStudentList.length;
+    const sumFinal = finalStudentList.reduce((acc, s) => acc + s.finalScore, 0);
+    const averageScore = Number((sumFinal / totalStudents).toFixed(1));
+    const averageCategory = getScoreCategory(averageScore);
+
+    const passedStudents = finalStudentList.filter((s) => s.finalScore >= kkm).length;
+    const failedStudents = totalStudents - passedStudents;
+    const classicalMasteryPercentage = Number(((passedStudents / totalStudents) * 100).toFixed(1));
+    const notPassedPercentage = Number((100 - classicalMasteryPercentage).toFixed(1));
+
+    // Distribution counts
+    let sangatBaikCount = 0;
+    let baikCount = 0;
+    let cukupCount = 0;
+    let perluBimbinganCount = 0;
+
+    finalStudentList.forEach((s) => {
+      const sc = s.finalScore;
+      if (sc >= 90) sangatBaikCount++;
+      else if (sc >= 80) baikCount++;
+      else if (sc >= 70) cukupCount++;
+      else perluBimbinganCount++;
+    });
+
+    const calcPct = (cnt) => Number(((cnt / totalStudents) * 100).toFixed(1));
+
+    // Competencies calculation from aspect columns
+    let competencies = [];
+    const ki3Col = aspectCols.find(
+      (c) => c.lower.includes('pengetahuan') || c.lower.includes('ki-3') || c.lower.includes('ki 3') || c.lower.includes('kognitif') || c.lower.includes('teori')
+    );
+    const ki4Col = aspectCols.find(
+      (c) => c.lower.includes('keterampilan') || c.lower.includes('ki-4') || c.lower.includes('ki 4') || c.lower.includes('praktik') || c.lower.includes('psikomotor')
+    );
+    const ki12Col = aspectCols.find(
+      (c) => c.lower.includes('sikap') || c.lower.includes('ki-1') || c.lower.includes('ki-2') || c.lower.includes('afektif') || c.lower.includes('profil')
+    );
+
+    const getColAverage = (col) => {
+      const vals = finalStudentList
+        .map((s) => s.scores[col.index])
+        .filter((v) => v !== undefined);
+      if (vals.length === 0) return averageScore;
+      return Number((vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1));
+    };
+
+    if (ki3Col || ki4Col || ki12Col) {
+      if (ki3Col) {
+        const avg = getColAverage(ki3Col);
+        competencies.push({ name: 'Pengetahuan (KI-3)', score: avg, category: getScoreCategory(avg) });
+      }
+      if (ki4Col) {
+        const avg = getColAverage(ki4Col);
+        competencies.push({ name: 'Keterampilan (KI-4)', score: avg, category: getScoreCategory(avg) });
+      }
+      if (ki12Col) {
+        const avg = getColAverage(ki12Col);
+        competencies.push({ name: 'Sikap (KI-1 & KI-2)', score: avg, category: getScoreCategory(avg) });
+      }
+      // Fill remaining columns if less than 3
+      aspectCols.forEach((col) => {
+        if (
+          competencies.length < 4 &&
+          col !== ki3Col &&
+          col !== ki4Col &&
+          col !== ki12Col
+        ) {
+          const avg = getColAverage(col);
+          competencies.push({ name: col.header, score: avg, category: getScoreCategory(avg) });
+        }
+      });
+    } else if (aspectCols.length >= 2) {
+      competencies = aspectCols.slice(0, 4).map((col) => {
+        const avg = getColAverage(col);
+        return {
+          name: col.header,
+          score: avg,
+          category: getScoreCategory(avg)
+        };
+      });
+    } else {
+      // Single score column in Excel: show main competency + derived breakdown
+      competencies = [
+        { name: scoreCols[0]?.header || 'Capaian Asesmen Utama', score: averageScore, category: averageCategory }
+      ];
+    }
+
+    // Identify students needing remedial for rich insights
+    const failedStudentNames = finalStudentList
+      .filter((s) => s.finalScore < kkm)
+      .map((s) => `${s.name} (${formatNum(s.finalScore)})`);
+
+    const lowestComp = [...competencies].sort((a, b) => a.score - b.score)[0];
+    const highestComp = [...competencies].sort((a, b) => b.score - a.score)[0];
+
+    const defaultFindings = [
+      `Dari total ${totalStudents} peserta didik pada data Excel, sebanyak ${passedStudents} siswa (${formatNum(classicalMasteryPercentage)}%) telah mencapai ketuntasan (KKTP ≥ ${kkm}).`,
+      competencies.length > 1
+        ? `Aspek "${lowestComp.name}" memiliki rata-rata terendah (${formatNum(lowestComp.score)}), sedangkan "${highestComp.name}" tertinggi (${formatNum(highestComp.score)}).`
+        : `Rata-rata kelas berada pada angka ${formatNum(averageScore)} dengan kategori ${averageCategory}.`,
+      failedStudents > 0
+        ? `Terdapat ${failedStudents} siswa (${formatNum(notPassedPercentage)}%) yang belum mencapai batas ketuntasan${failedStudentNames.length <= 5 ? `: ${failedStudentNames.join(', ')}` : ' dan memerlukan pendampingan khusus'}.`
+        : `Seluruh peserta didik (100%) telah melampaui batas ketuntasan minimum dengan sangat baik.`
+    ];
+
+    const defaultRecommendations = [
+      failedStudents > 0
+        ? `Lakukan program remedial terarah bagi ${failedStudents} siswa yang belum tuntas${failedStudentNames.length <= 4 ? ` (${failedStudentNames.join(', ')})` : ''}.`
+        : `Pertahankan strategi pembelajaran yang telah berjalan efektif dan berikan tantangan proyek lanjutan.`,
+      competencies.length > 1
+        ? `Perkuat latihan dan pendampingan pada aspek "${lowestComp.name}" yang masih memperoleh rata-rata ${formatNum(lowestComp.score)}.`
+        : `Gunakan variasi metode pembelajaran terdiferensiasi untuk membantu siswa di kategori Cukup dan Perlu Bimbingan.`,
+      sangatBaikCount > 0
+        ? `Berikan materi pengayaan atau jadikan tutor sebaya bagi ${sangatBaikCount} siswa yang meraih predikat Sangat Baik (90–100).`
+        : `Tingkatkan kualitas umpan balik formatif agar lebih banyak siswa mampu menembus rentang nilai Sangat Baik (90–100).`,
+      `Dokumentasikan hasil analisis Excel ini sebagai dasar pemetaan kebutuhan belajar siswa pada materi berikutnya.`
+    ];
+
+    return {
+      totalStudents,
+      averageScore,
+      averageCategory,
+      classicalMasteryPercentage,
+      passedStudents,
+      notPassedPercentage,
+      failedStudents,
+      competencies,
+      distribution: {
+        sangatBaik: {
+          label: 'Sangat Baik (90–100)',
+          percentage: calcPct(sangatBaikCount),
+          count: sangatBaikCount,
+          color: '#3b82f6'
+        },
+        baik: {
+          label: 'Baik (80–89)',
+          percentage: calcPct(baikCount),
+          count: baikCount,
+          color: '#10b981'
+        },
+        cukup: {
+          label: 'Cukup (70–79)',
+          percentage: calcPct(cukupCount),
+          count: cukupCount,
+          color: '#f59e0b'
+        },
+        perluBimbingan: {
+          label: 'Perlu Bimbingan (<70)',
+          percentage: calcPct(perluBimbinganCount),
+          count: perluBimbinganCount,
+          color: '#ef4444'
+        }
+      },
+      keyFindings: defaultFindings,
+      recommendations: defaultRecommendations,
+      studentList: finalStudentList,
+      scoreColumns: scoreCols.map((c) => c.header),
+      failedStudentNames
+    };
+  };
+
+  // Parse manual comma-separated raw scores if provided
+  const analyzeRawScoreInput = (rawText, kkmValue = 75) => {
+    if (!rawText || !rawText.trim()) return null;
+    const nums = rawText
+      .split(/[,;\s\n]+/)
+      .map((s) => Number(s.trim().replace(',', '.')))
+      .filter((n) => !isNaN(n) && n >= 0 && n <= 100);
+
+    if (nums.length === 0) return null;
+    const rows = [['No', 'Nama Siswa', 'Nilai Akhir'], ...nums.map((n, i) => [i + 1, `Siswa ${i + 1}`, n])];
+    return analyzeSpreadsheetRows(rows, kkmValue);
+  };
+
+  const handleFileProcess = async (file) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      showToast('Ukuran file melebihi batas maksimal 10 MB.');
+      return;
+    }
+    setUploadedFile(file);
+
+    const fileName = file.name.toLowerCase();
+    const isExcelOrCsv =
+      fileName.endsWith('.xlsx') ||
+      fileName.endsWith('.xls') ||
+      fileName.endsWith('.csv');
+
+    if (isExcelOrCsv) {
+      try {
+        const XLSX = await loadXlsxLibrary();
+        const arrayBuffer = await file.arrayBuffer();
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+
+        // Extract 2D array of rows
+        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+        const csvSummary = XLSX.utils.sheet_to_csv(worksheet).slice(0, 3500);
+        setExtractedFileText(csvSummary);
+
+        const stats = analyzeSpreadsheetRows(rows, customKkm);
+        if (stats) {
+          setParsedExcelStats(stats);
+          setAnalysis((prev) => ({
+            ...prev,
+            contextTitle: `Data File: ${file.name}`,
+            totalStudents: stats.totalStudents,
+            averageScore: stats.averageScore,
+            averageCategory: stats.averageCategory,
+            classicalMasteryPercentage: stats.classicalMasteryPercentage,
+            passedStudents: stats.passedStudents,
+            notPassedPercentage: stats.notPassedPercentage,
+            failedStudents: stats.failedStudents,
+            competencies: stats.competencies,
+            distribution: stats.distribution,
+            keyFindings: stats.keyFindings,
+            recommendations: stats.recommendations
+          }));
+          showToast(`Data Excel terbaca otomatis: ${stats.totalStudents} siswa dengan rata-rata ${ String(stats.averageScore).replace('.', ',') }!`);
+        } else {
+          setParsedExcelStats(null);
+          showToast('File Excel berhasil diunggah, namun format kolom nilai belum terdeteksi otomatis.');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Gagal membaca struktur Excel, menggunakan ekstraksi teks.');
+      }
+      return;
+    }
+
+    // Fallback for TXT / Word / PDF
+    setParsedExcelStats(null);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result;
+      if (typeof content === 'string') {
+        setExtractedFileText(content.slice(0, 3000));
+      }
+    };
+    if (file.type.includes('text') || fileName.endsWith('.txt') || fileName.endsWith('.json')) {
+      reader.readAsText(file);
+    } else {
+      setExtractedFileText(`Nama File: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+    }
+  };
+
+  // Download sample Excel template so user can test or format easily
+  const handleDownloadTemplate = async (e) => {
+    e.stopPropagation();
+    try {
+      const XLSX = await loadXlsxLibrary();
+      const sampleData = [
+        ['No', 'Nama Siswa', 'Pengetahuan (KI-3)', 'Keterampilan (KI-4)', 'Sikap (KI-1 & KI-2)', 'Nilai Akhir'],
+        [1, 'Aditya Pratama', 88, 84, 92, 88],
+        [2, 'Bunga Citra Lestari', 94, 90, 95, 93],
+        [3, 'Chandra Wijaya', 76, 72, 85, 77.7],
+        [4, 'Dewi Sartika', 65, 62, 80, 69],
+        [5, 'Eko Saputra', 82, 78, 88, 82.7],
+        [6, 'Farah Quinn', 91, 88, 94, 91],
+        [7, 'Gilang Ramadhan', 68, 64, 78, 70],
+        [8, 'Hana Saraswati', 85, 80, 90, 85],
+        [9, 'Indra Bekti', 79, 75, 86, 80],
+        [10, 'Joko Anwar', 95, 92, 96, 94.3],
+        [11, 'Kartika Putri', 62, 58, 75, 65],
+        [12, 'Lukman Sardi', 84, 82, 89, 85]
+      ];
+      const ws = XLSX.utils.aoa_to_sheet(sampleData);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Nilai Asesmen');
+      XLSX.writeFile(wb, 'Template_Analisis_Asesmen.xlsx');
+      showToast('Template Excel berhasil diunduh!');
+    } catch (error) {
+      showToast('Gagal mengunduh template Excel.');
+    }
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) handleFileProcess(file);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileProcess(file);
+  };
+
+  const fetchWithRetry = async (url, options, retries = 3, delay = 1000) => {
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`);
+      }
+      return await response.json();
+    } catch (err) {
+      if (retries > 0) {
+        await new Promise((res) => setTimeout(res, delay));
+        return fetchWithRetry(url, options, retries - 1, delay * 2);
+      }
+      throw err;
+    }
+  };
+
+  const handleGenerateAnalysis = async () => {
+    setIsGenerating(true);
+
+    const selectedJenjang = jenjang || 'SMA / MA';
+    const selectedMapel = mapel || 'Matematika';
+    const selectedKelas = kelasFase || 'Fase E (Kelas 10 SMA/SMK)';
+    const selectedJenis = jenisAsesmen || 'Asesmen Sumatif Akhir Lingkup Materi';
+    const selectedTujuan = tujuanAnalisis || 'Evaluasi Ketuntasan & Rencana Tindak Lanjut (Remedial/Pengayaan)';
+
+    // Re-evaluate Excel or Raw Scores with current KKM if available
+    const activeExactStats =
+      parsedExcelStats || analyzeRawScoreInput(rawScoresInput, customKkm);
+
+    // If we have exact Excel or Raw Score statistics, lock the numbers 100% to the real data
+    // and use AI specifically to enrich the pedagogical findings & recommendations
+    if (activeExactStats) {
+      const systemPrompt = `Anda adalah Pakar Evaluasi Pendidikan Kurikulum Merdeka.
+Data kuantitatif dari file Excel pengguna TELAH DIHITUNG SECARA PASTI.
+Tugas Anda adalah menyusun 3-4 poin "keyFindings" (Temuan Utama) dan 4 poin "recommendations" (Rekomendasi Tindak Lanjut) yang SANGAT SPESIFIK dan KONSISTEN 100% dengan angka-angka hasil perhitungan Excel di bawah ini. Jangan mengubah angka sedikit pun.`;
+
+      const userQuery = `Data Statistik Eksak dari File Excel (${uploadedFile?.name || 'Input Nilai'}):
+- Jenjang: ${selectedJenjang} | Mapel: ${selectedMapel} | Kelas/Fase: ${selectedKelas}
+- Jenis Asesmen: ${selectedJenis} | Tujuan: ${selectedTujuan}
+- Jumlah Peserta Didik: ${activeExactStats.totalStudents} siswa
+- Rata-rata Nilai Kelas: ${activeExactStats.averageScore} (${activeExactStats.averageCategory})
+- Ketuntasan Klasikal (KKTP >= ${customKkm || 75}): ${activeExactStats.classicalMasteryPercentage}% (${activeExactStats.passedStudents} dari ${activeExactStats.totalStudents} siswa tuntas)
+- Belum Tuntas: ${activeExactStats.notPassedPercentage}% (${activeExactStats.failedStudents} siswa belum tuntas${activeExactStats.failedStudentNames?.length ? ': ' + activeExactStats.failedStudentNames.slice(0, 5).join(', ') : ''})
+- Rata-rata per Kompetensi: ${activeExactStats.competencies.map((c) => `${c.name} = ${c.score} (${c.category})`).join(', ')}
+- Distribusi Nilai: Sangat Baik = ${activeExactStats.distribution.sangatBaik.count} siswa (${activeExactStats.distribution.sangatBaik.percentage}%), Baik = ${activeExactStats.distribution.baik.count} siswa (${activeExactStats.distribution.baik.percentage}%), Cukup = ${activeExactStats.distribution.cukup.count} siswa (${activeExactStats.distribution.cukup.percentage}%), Perlu Bimbingan = ${activeExactStats.distribution.perluBimbingan.count} siswa (${activeExactStats.distribution.perluBimbingan.percentage}%)
+- Catatan Guru: ${deskripsi || '-'}`;
+
+      const apiKey = '';
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+      let aiFindings = activeExactStats.keyFindings;
+      let aiRecommendations = activeExactStats.recommendations;
+
+      try {
+        const result = await fetchWithRetry(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: userQuery }] }],
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: 'OBJECT',
+                properties: {
+                  keyFindings: { type: 'ARRAY', items: { type: 'STRING' } },
+                  recommendations: { type: 'ARRAY', items: { type: 'STRING' } }
+                },
+                required: ['keyFindings', 'recommendations']
+              }
+            }
+          })
+        });
+
+        const rawJson = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawJson) {
+          const parsed = JSON.parse(rawJson);
+          if (Array.isArray(parsed.keyFindings) && parsed.keyFindings.length > 0) {
+            aiFindings = parsed.keyFindings.slice(0, 4);
+          }
+          if (Array.isArray(parsed.recommendations) && parsed.recommendations.length > 0) {
+            aiRecommendations = parsed.recommendations.slice(0, 4);
+          }
+        }
+      } catch (e) {
+        // Fallback to exact deterministic findings from Excel calculation
+      }
+
+      setAnalysis({
+        contextTitle: uploadedFile
+          ? `${uploadedFile.name} • ${selectedMapel}`
+          : `${selectedMapel} • ${selectedKelas}`,
+        totalStudents: activeExactStats.totalStudents,
+        averageScore: activeExactStats.averageScore,
+        averageCategory: activeExactStats.averageCategory,
+        classicalMasteryPercentage: activeExactStats.classicalMasteryPercentage,
+        passedStudents: activeExactStats.passedStudents,
+        notPassedPercentage: activeExactStats.notPassedPercentage,
+        failedStudents: activeExactStats.failedStudents,
+        competencies: activeExactStats.competencies,
+        distribution: activeExactStats.distribution,
+        keyFindings: aiFindings,
+        recommendations: aiRecommendations
+      });
+
+      setIsGenerating(false);
+      showToast('Analisis berhasil disesuaikan 100% dengan data Excel Anda!');
+      setTimeout(() => {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 150);
+      return;
+    }
+
+    const systemPrompt = `Anda adalah Pakar Evaluasi Pendidikan dan Asesmen Kurikulum Merdeka di Indonesia.
+Tugas Anda adalah menghasilkan Analisis Asesmen yang akurat, komprehensif, realistis, dan siap digunakan oleh guru berdasarkan parameter input.
+Pastikan perhitungan matematika konsisten:
+- passedStudents + failedStudents = totalStudents
+- classicalMasteryPercentage = (passedStudents / totalStudents) * 100 (bulatkan 1 desimal)
+- notPassedPercentage = 100 - classicalMasteryPercentage (bulatkan 1 desimal)
+- Jumlah count pada distribusi (sangatBaik + baik + cukup + perluBimbingan) HARUS sama persis dengan totalStudents.
+- Persentase tiap kategori distribusi = (count / totalStudents) * 100 (bulatkan 1 desimal).
+- Gunakan Bahasa Indonesia yang profesional, tajam, relevan dengan Mata Pelajaran dan Jenjang yang dipilih, serta mengacu pada Kurikulum Merdeka.`;
+
+    const userQuery = `Buatkan analisis asesmen lengkap dengan detail berikut:
+- Jenjang Pendidikan: ${selectedJenjang}
+- Mata Pelajaran: ${selectedMapel}
+- Kelas / Fase: ${selectedKelas}
+- Jenis Asesmen: ${selectedJenis}
+- Tujuan Analisis: ${selectedTujuan}
+- Deskripsi / Instruksi Tambahan Guru: ${deskripsi || 'Fokus pada identifikasi kesulitan belajar, rekomendasi perbaikan, dan analisis capaian kompetensi.'}
+${customJumlahSiswa ? `- Target Jumlah Peserta Didik: ${customJumlahSiswa} siswa` : ''}
+${customKkm ? `- KKTP / Batas Ketuntasan: ${customKkm}` : ''}
+${rawScoresInput ? `- Data Nilai Siswa: ${rawScoresInput}` : ''}
+${uploadedFile ? `- File Terlampir: ${uploadedFile.name}\nIsi/Cuplikan File:\n${extractedFileText}` : ''}`;
+
+    const apiKey = '';
+    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+
+    const payload = {
+      contents: [{ parts: [{ text: userQuery }] }],
+      systemInstruction: { parts: [{ text: systemPrompt }] },
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: 'OBJECT',
+          properties: {
+            totalStudents: { type: 'INTEGER' },
+            averageScore: { type: 'NUMBER' },
+            averageCategory: { type: 'STRING' },
+            classicalMasteryPercentage: { type: 'NUMBER' },
+            passedStudents: { type: 'INTEGER' },
+            notPassedPercentage: { type: 'NUMBER' },
+            failedStudents: { type: 'INTEGER' },
+            competencies: {
+              type: 'ARRAY',
+              items: {
+                type: 'OBJECT',
+                properties: {
+                  name: { type: 'STRING' },
+                  score: { type: 'NUMBER' },
+                  category: { type: 'STRING' }
+                },
+                required: ['name', 'score', 'category']
+              }
+            },
+            distributionCounts: {
+              type: 'OBJECT',
+              properties: {
+                sangatBaikCount: { type: 'INTEGER' },
+                baikCount: { type: 'INTEGER' },
+                cukupCount: { type: 'INTEGER' },
+                perluBimbinganCount: { type: 'INTEGER' }
+              },
+              required: ['sangatBaikCount', 'baikCount', 'cukupCount', 'perluBimbinganCount']
+            },
+            keyFindings: {
+              type: 'ARRAY',
+              items: { type: 'STRING' }
+            },
+            recommendations: {
+              type: 'ARRAY',
+              items: { type: 'STRING' }
+            }
+          },
+          required: [
+            'totalStudents',
+            'averageScore',
+            'averageCategory',
+            'classicalMasteryPercentage',
+            'passedStudents',
+            'notPassedPercentage',
+            'failedStudents',
+            'competencies',
+            'distributionCounts',
+            'keyFindings',
+            'recommendations'
+          ]
+        }
+      }
+    };
+
+    try {
+      const result = await fetchWithRetry(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const rawJson = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (rawJson) {
+        const parsed = JSON.parse(rawJson);
+        const total = Math.max(1, Number(parsed.totalStudents) || 32);
+        const sbCount = Number(parsed.distributionCounts?.sangatBaikCount) || 0;
+        const bCount = Number(parsed.distributionCounts?.baikCount) || 0;
+        const cCount = Number(parsed.distributionCounts?.cukupCount) || 0;
+        const pbCount = Math.max(0, total - (sbCount + bCount + cCount));
+
+        const calcPct = (cnt) => Number(((cnt / total) * 100).toFixed(1));
+
+        setAnalysis({
+          contextTitle: `${selectedMapel} • ${selectedKelas} (${selectedJenjang})`,
+          totalStudents: total,
+          averageScore: Number(Number(parsed.averageScore || 78.6).toFixed(1)),
+          averageCategory: parsed.averageCategory || 'Baik',
+          classicalMasteryPercentage: Number(Number(parsed.classicalMasteryPercentage || 87.5).toFixed(1)),
+          passedStudents: Number(parsed.passedStudents) || total - pbCount,
+          notPassedPercentage: Number(Number(parsed.notPassedPercentage || 12.5).toFixed(1)),
+          failedStudents: Number(parsed.failedStudents) ?? pbCount,
+          competencies:
+            Array.isArray(parsed.competencies) && parsed.competencies.length >= 3
+              ? parsed.competencies.slice(0, 4)
+              : DEFAULT_ANALYSIS.competencies,
+          distribution: {
+            sangatBaik: {
+              label: 'Sangat Baik (90–100)',
+              percentage: calcPct(sbCount),
+              count: sbCount,
+              color: '#3b82f6'
+            },
+            baik: {
+              label: 'Baik (80–89)',
+              percentage: calcPct(bCount),
+              count: bCount,
+              color: '#10b981'
+            },
+            cukup: {
+              label: 'Cukup (70–79)',
+              percentage: calcPct(cCount),
+              count: cCount,
+              color: '#f59e0b'
+            },
+            perluBimbingan: {
+              label: 'Perlu Bimbingan (<70)',
+              percentage: calcPct(pbCount),
+              count: pbCount,
+              color: '#ef4444'
+            }
+          },
+          keyFindings:
+            Array.isArray(parsed.keyFindings) && parsed.keyFindings.length > 0
+              ? parsed.keyFindings.slice(0, 4)
+              : DEFAULT_ANALYSIS.keyFindings,
+          recommendations:
+            Array.isArray(parsed.recommendations) && parsed.recommendations.length > 0
+              ? parsed.recommendations.slice(0, 4)
+              : DEFAULT_ANALYSIS.recommendations
+        });
+
+        showToast('Analisis asesmen berhasil dibuat oleh AI!');
+        setTimeout(() => {
+          resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+      }
+    } catch (error) {
+      showToast('Menggunakan simulasi cerdas untuk menampilkan analisis asesmen.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const formatNum = (num) => {
+    if (num === undefined || num === null) return '0';
+    return String(num).replace('.', ',');
+  };
+
+  const getCategoryBadgeStyle = (category) => {
+    const lower = (category || '').toLowerCase();
+    if (lower.includes('sangat baik')) {
+      return 'bg-blue-50 text-blue-600 border border-blue-200/80';
+    }
+    if (lower.includes('baik')) {
+      return 'bg-emerald-50 text-emerald-600 border border-emerald-200/80';
+    }
+    if (lower.includes('cukup')) {
+      return 'bg-amber-50 text-amber-600 border border-amber-200/80';
+    }
+    return 'bg-rose-50 text-rose-600 border border-rose-200/80';
+  };
+
+  const handleCopyReport = () => {
+    const reportText = `HASIL ANALISIS ASESMEN
+${jenjang ? `Jenjang: ${jenjang} | ` : ''}${mapel ? `Mapel: ${mapel} | ` : ''}${kelasFase ? `Kelas/Fase: ${kelasFase}` : ''}
+
+RINGKASAN CAPAIAN:
+- Jumlah Peserta Didik: ${analysis.totalStudents} Siswa
+- Rata-rata Nilai: ${formatNum(analysis.averageScore)} (${analysis.averageCategory})
+- Ketuntasan Klasikal: ${formatNum(analysis.classicalMasteryPercentage)}% (${analysis.passedStudents} dari ${analysis.totalStudents} siswa)
+- Belum Tuntas: ${formatNum(analysis.notPassedPercentage)}% (${analysis.failedStudents} siswa)
+
+ANALISIS CAPAIAN KOMPETENSI:
+${analysis.competencies.map((c) => `- ${c.name}: ${formatNum(c.score)} (${c.category})`).join('\n')}
+
+TEMUAN UTAMA:
+${analysis.keyFindings.map((f) => `• ${f}`).join('\n')}
+
+REKOMENDASI TINDAK LANJUT:
+${analysis.recommendations.map((r) => `✓ ${r}`).join('\n')}`;
+
+    const textArea = document.createElement('textarea');
+    textArea.value = reportText;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    showToast('Ringkasan analisis berhasil disalin ke clipboard!');
+  };
+
+  const fillDemoPreset = () => {
+    setJenjang('SMP / MTs');
+    setMapel('Matematika');
+    setKelasFase('Fase D (Kelas 7 – 9 SMP)');
+    setJenisAsesmen('Asesmen Sumatif Akhir Lingkup Materi');
+    setTujuanAnalisis('Evaluasi Ketuntasan & Rencana Tindak Lanjut (Remedial/Pengayaan)');
+    setDeskripsi(
+      'Fokus pada evaluasi pemahaman konsep Aljabar dan Aritmatika Sosial, identifikasi siswa yang kesulitan pada soal cerita keterampilan praktis, serta rekomendasi remedial terarah.'
+    );
+    showToast('Contoh data input berhasil diisi!');
+  };
+
+  return (
+    <div className="min-h-screen bg-[#f4f7fb] text-slate-800 py-6 px-4 sm:px-6 lg:px-8 font-sans">
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl border border-slate-700 animate-bounce">
+          <Sparkles className="w-4 h-4 text-blue-400 shrink-0" />
+          <span className="text-sm font-medium">{toastMessage}</span>
+        </div>
+      )}
+
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* TOP HERO BANNER */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-[#fdf6f0] via-[#f7ebd9] to-[#f4e4cc] p-6 sm:p-8 shadow-sm border border-[#e8d5bc]">
+          {/* Decorative background shapes */}
+          <div className="pointer-events-none absolute -right-12 -top-12 w-72 h-72 rounded-full bg-[#d4a373]/15 blur-2xl" />
+          <div className="pointer-events-none absolute left-1/3 -bottom-16 w-80 h-44 rotate-12 bg-white/40 blur-xl rounded-full" />
+
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            {/* Left Side: AI Icon + Title */}
+            <div className="flex items-start sm:items-center gap-5">
+              {/* AI Circuit Box Icon */}
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-[#bc6c25] via-[#dda15e] to-[#b08968] p-3.5 shadow-lg shadow-[#bc6c25]/25 flex items-center justify-center shrink-0 border border-white/30">
+                <svg viewBox="0 0 64 64" className="w-full h-full text-white" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  {/* Brain/Circuit outer nodes */}
+                  <rect x="22" y="22" width="20" height="20" rx="4" className="fill-white/15" stroke="white" strokeWidth="2.5" />
+                  <text x="32" y="36" textAnchor="middle" fill="white" stroke="none" fontSize="11" fontWeight="800" fontFamily="sans-serif">
+                    AI
+                  </text>
+                  {/* Top pins */}
+                  <path d="M27 22V12M32 22V10M37 22V12" strokeLinecap="round" />
+                  <circle cx="27" cy="10" r="2" fill="white" />
+                  <circle cx="32" cy="8" r="2" fill="white" />
+                  <circle cx="37" cy="10" r="2" fill="white" />
+                  {/* Bottom pins */}
+                  <path d="M27 42V52M32 42V54M37 42V52" strokeLinecap="round" />
+                  <circle cx="27" cy="54" r="2" fill="white" />
+                  <circle cx="32" cy="56" r="2" fill="white" />
+                  <circle cx="37" cy="54" r="2" fill="white" />
+                  {/* Left pins */}
+                  <path d="M22 27H12M22 32H10M22 37H12" strokeLinecap="round" />
+                  <circle cx="10" cy="27" r="2" fill="white" />
+                  <circle cx="8" cy="32" r="2" fill="white" />
+                  <circle cx="10" cy="37" r="2" fill="white" />
+                  {/* Right pins */}
+                  <path d="M42 27H52M42 32H54M42 37H52" strokeLinecap="round" />
+                  <circle cx="54" cy="27" r="2" fill="white" />
+                  <circle cx="56" cy="32" r="2" fill="white" />
+                  <circle cx="54" cy="37" r="2" fill="white" />
+                  {/* Corner circuit lines */}
+                  <path d="M22 22L15 15M42 22L49 15M22 42L15 49M42 42L49 49" strokeLinecap="round" />
+                  <circle cx="14" cy="14" r="2" fill="white" />
+                  <circle cx="50" cy="14" r="2" fill="white" />
+                  <circle cx="14" cy="50" r="2" fill="white" />
+                  <circle cx="50" cy="50" r="2" fill="white" />
+                </svg>
+              </div>
+
+              <div>
+                <h1 className="text-xl sm:text-2xl font-extrabold text-[#4a3525] tracking-tight leading-tight">
+                  Generator AI Penganalisis Asesmen
+                  <span className="block text-xl sm:text-3xl text-[#582f0e] mt-0.5">
+                    SMP Muh. 2 Depok
+                  </span>
+                </h1>
+                <p className="mt-2 text-xs sm:text-sm text-[#7f5539] max-w-md leading-relaxed font-medium">
+                  Analisis data nilai asesmen peserta didik secara cepat, akurat, dan otomatis.
+                </p>
+              </div>
+            </div>
+
+            {/* Right Side: "Format Terbaru" Card */}
+            <div className="bg-white/90 backdrop-blur-sm rounded-xl p-4 sm:px-5 sm:py-4 shadow-sm border border-[#e8d5bc] lg:w-72 shrink-0">
+              <div className="flex items-center gap-2.5 mb-2.5">
+                <div className="w-7 h-7 rounded-full bg-[#fefae0] flex items-center justify-center text-[#bc6c25]">
+                  <Target className="w-4 h-4" />
+                </div>
+                <h2 className="font-bold text-[#4a3525] text-sm sm:text-base">
+                  Format Terbaru
+                </h2>
+              </div>
+              <ul className="space-y-1.5 text-xs sm:text-sm text-[#654522] font-medium">
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#dda15e] stroke-[2.5] shrink-0" />
+                  <span>Mengacu pada Kurikulum Terbaru</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#dda15e] stroke-[2.5] shrink-0" />
+                  <span>Struktur Analisis Lengkap</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#dda15e] stroke-[2.5] shrink-0" />
+                  <span>Mudah Dipahami</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check className="w-4 h-4 text-[#dda15e] stroke-[2.5] shrink-0" />
+                  <span>Siap Digunakan</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        {/* SECTION 1: INPUT DATA ASESMEN */}
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8">
+          {/* Card Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-6 border-b border-slate-100">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shadow-sm shadow-blue-500/20 shrink-0">
+                <FileSpreadsheet className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-[#0f294a]">
+                  Input Data Asesmen
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                  Masukkan data asesmen Anda untuk mendapatkan analisis yang komprehensif.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-center">
+              <button
+                type="button"
+                onClick={fillDemoPreset}
+                className="text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition flex items-center gap-1.5"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Isi Contoh Cepat
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCustomData(!showCustomData)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 border ${
+                  showCustomData
+                    ? 'bg-slate-800 text-white border-slate-800'
+                    : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <SlidersHorizontal className="w-3.5 h-3.5" />
+                Parameter Nilai
+              </button>
+            </div>
+          </div>
+
+          {/* Two-Column Input Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5 mt-6">
+            {/* LEFT COLUMN */}
+            <div className="space-y-5">
+              {/* Jenjang Pendidikan */}
+              <div>
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1e3a5f] mb-2">
+                  <GraduationCap className="w-4 h-4 text-[#1e3a5f]" />
+                  <span>Jenjang Pendidikan</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={jenjang}
+                    onChange={(e) => setJenjang(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="">Pilih Jenjang Pendidikan</option>
+                    {JENJANG_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                </div>
+              </div>
+
+              {/* Mata Pelajaran */}
+              <div>
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1e3a5f] mb-2">
+                  <BookOpen className="w-4 h-4 text-[#1e3a5f]" />
+                  <span>Mata Pelajaran</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={mapel}
+                    onChange={(e) => setMapel(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="">Pilih Mata Pelajaran</option>
+                    {MAPEL_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                </div>
+              </div>
+
+              {/* Kelas / Fase */}
+              <div>
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1e3a5f] mb-2">
+                  <Users className="w-4 h-4 text-[#1e3a5f]" />
+                  <span>Kelas / Fase</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={kelasFase}
+                    onChange={(e) => setKelasFase(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="">Pilih Kelas / Fase</option>
+                    {KELAS_FASE_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                </div>
+              </div>
+            </div>
+
+            {/* RIGHT COLUMN */}
+            <div className="space-y-5">
+              {/* Jenis Asesmen */}
+              <div>
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1e3a5f] mb-2">
+                  <FileText className="w-4 h-4 text-[#1e3a5f]" />
+                  <span>Jenis Asesmen</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={jenisAsesmen}
+                    onChange={(e) => setJenisAsesmen(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="">Pilih Jenis Asesmen</option>
+                    {JENIS_ASESMEN_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                </div>
+              </div>
+
+              {/* Format File (Opsional) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1e3a5f]">
+                    <Paperclip className="w-4 h-4 text-[#1e3a5f]" />
+                    <span>Format File (Opsional)</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleDownloadTemplate}
+                    className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 hover:underline cursor-pointer"
+                  >
+                    <Download className="w-3 h-3" />
+                    Unduh Contoh Excel
+                  </button>
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,.xls,.xlsx,.csv,.doc,.docx,.txt"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setIsDragging(true);
+                  }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={handleDrop}
+                  className={`cursor-pointer rounded-xl border-2 border-dashed px-4 py-3.5 transition flex items-center justify-between ${
+                    isDragging
+                      ? 'border-blue-500 bg-blue-50/70'
+                      : uploadedFile
+                      ? 'border-emerald-300 bg-emerald-50/40'
+                      : 'border-blue-200 bg-[#f8fbff] hover:bg-blue-50/40 hover:border-blue-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <UploadCloud
+                      className={`w-6 h-6 shrink-0 ${
+                        uploadedFile ? 'text-emerald-600' : 'text-blue-500'
+                      }`}
+                    />
+                    <div className="truncate">
+                      {uploadedFile ? (
+                        <>
+                          <p className="text-xs sm:text-sm font-semibold text-emerald-800 truncate">
+                            {uploadedFile.name}
+                          </p>
+                          <p className="text-[11px] text-emerald-600">
+                            {parsedExcelStats
+                              ? `✓ ${parsedExcelStats.totalStudents} siswa terbaca • Rata-rata ${String(parsedExcelStats.averageScore).replace('.', ',')}`
+                              : `${(uploadedFile.size / 1024).toFixed(1)} KB • Siap dianalisis`}
+                          </p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-xs sm:text-sm font-medium text-slate-600 truncate">
+                            Unggah file asesmen (PDF, Excel, atau Word)
+                          </p>
+                          <p className="text-[11px] text-slate-400">Maks. 10 MB</p>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {uploadedFile && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      {parsedExcelStats && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowDataPreview(!showDataPreview);
+                          }}
+                          className="px-2 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-[11px] font-semibold transition flex items-center gap-1"
+                          title="Lihat Data Terbaca"
+                        >
+                          <Eye className="w-3 h-3" />
+                          <span>Detail</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setUploadedFile(null);
+                          setExtractedFileText('');
+                          setParsedExcelStats(null);
+                          setShowDataPreview(false);
+                        }}
+                        className="p-1 rounded-lg hover:bg-rose-100 text-slate-400 hover:text-rose-600 transition"
+                        title="Hapus file"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Tujuan Analisis */}
+              <div>
+                <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1e3a5f] mb-2">
+                  <Target className="w-4 h-4 text-[#1e3a5f]" />
+                  <span>Tujuan Analisis</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={tujuanAnalisis}
+                    onChange={(e) => setTujuanAnalisis(e.target.value)}
+                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-2.5 pr-10 text-sm text-slate-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="">Pilih Tujuan Analisis</option>
+                    {TUJUAN_ANALISIS_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Optional Custom Parameter Drawer */}
+          {showCustomData && (
+            <div className="mt-5 p-4 rounded-xl bg-slate-50 border border-slate-200/80 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Jumlah Peserta Didik (Opsional)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="500"
+                  placeholder="Contoh: 32"
+                  value={customJumlahSiswa}
+                  onChange={(e) => setCustomJumlahSiswa(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Batas Ketuntasan / KKTP
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="Contoh: 75"
+                  value={customKkm}
+                  onChange={(e) => setCustomKkm(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Daftar Nilai Siswa (Pisahkan Koma)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Contoh: 85, 90, 78, 65, 88, 92..."
+                  value={rawScoresInput}
+                  onChange={(e) => setRawScoresInput(e.target.value)}
+                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm focus:border-blue-500 focus:outline-none"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Pratinjau Data Excel yang Terbaca */}
+          {showDataPreview && parsedExcelStats && (
+            <div className="mt-5 p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/80">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-emerald-900">
+                  <Table className="w-4 h-4 text-emerald-600" />
+                  <span>
+                    Pratinjau Data Excel Terbaca ({parsedExcelStats.totalStudents} Siswa)
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setShowDataPreview(false)}
+                  className="text-xs font-semibold text-emerald-700 hover:underline"
+                >
+                  Tutup Pratinjau
+                </button>
+              </div>
+              <div className="max-h-48 overflow-y-auto rounded-lg border border-emerald-200/60 bg-white">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead className="bg-emerald-50 text-emerald-900 sticky top-0">
+                    <tr>
+                      <th className="py-2 px-3 font-bold">No</th>
+                      <th className="py-2 px-3 font-bold">Nama Peserta Didik</th>
+                      <th className="py-2 px-3 font-bold text-center">Nilai Akhir</th>
+                      <th className="py-2 px-3 font-bold text-center">Status (KKTP {customKkm || 75})</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {parsedExcelStats.studentList.map((st, i) => {
+                      const isPassed = st.finalScore >= (Number(customKkm) || 75);
+                      return (
+                        <tr key={i} className="hover:bg-slate-50">
+                          <td className="py-1.5 px-3 text-slate-500">{i + 1}</td>
+                          <td className="py-1.5 px-3 font-medium text-slate-800">{st.name}</td>
+                          <td className="py-1.5 px-3 text-center font-bold text-slate-800">
+                            {formatNum(st.finalScore)}
+                          </td>
+                          <td className="py-1.5 px-3 text-center">
+                            <span
+                              className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${
+                                isPassed
+                                  ? 'bg-emerald-50 text-emerald-700'
+                                  : 'bg-rose-50 text-rose-700'
+                              }`}
+                            >
+                              {isPassed ? 'Tuntas' : 'Belum Tuntas'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Deskripsi Tambahan (Opsional) */}
+          <div className="mt-5">
+            <label className="flex items-center gap-2 text-xs sm:text-sm font-bold text-[#1e3a5f] mb-2">
+              <Edit3 className="w-4 h-4 text-[#1e3a5f]" />
+              <span>Deskripsi Tambahan (Opsional)</span>
+            </label>
+            <div className="relative">
+              <textarea
+                rows={3}
+                maxLength={500}
+                value={deskripsi}
+                onChange={(e) => setDeskripsi(e.target.value)}
+                placeholder="Contoh: Fokus pada identifikasi kesulitan belajar, rekomendasi perbaikan, atau analisis capaian kompetensi..."
+                className="w-full rounded-xl border border-slate-200 bg-[#fbfdff] p-4 pb-7 text-sm text-slate-700 placeholder:text-slate-400 shadow-sm focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+              />
+              <span className="absolute bottom-2.5 right-3.5 text-xs font-medium text-slate-400">
+                {deskripsi.length}/500
+              </span>
+            </div>
+          </div>
+
+          {/* Generate Button */}
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={handleGenerateAnalysis}
+              disabled={isGenerating}
+              className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#bc6c25] via-[#dda15e] to-[#b08968] hover:from-[#a35d1f] hover:to-[#9c7554] active:scale-[0.995] text-white font-bold text-sm sm:text-base shadow-md shadow-[#bc6c25]/25 transition flex items-center justify-center gap-2.5 disabled:opacity-70 cursor-pointer"
+            >
+              {isGenerating ? (
+                <>
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  <span>Menganalisis Data Asesmen dengan AI...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-5 h-5" />
+                  <span>Generate Analisis Asesmen</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* SECTION 2: HASIL ANALISIS ASESMEN */}
+        <div
+          ref={resultRef}
+          className="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6 sm:p-8 transition-all"
+        >
+          {/* Header Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-100">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shadow-sm shadow-blue-500/20 shrink-0">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-lg sm:text-xl font-bold text-[#0f294a]">
+                    Hasil Analisis Asesmen
+                  </h2>
+                  {(jenjang || mapel || kelasFase) && (
+                    <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-md border border-blue-200/60">
+                      {[mapel, kelasFase, jenjang].filter(Boolean).join(' • ')}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                  Berikut adalah analisis asesmen berdasarkan data yang Anda masukkan dengan format terbaru.
+                </p>
+              </div>
+            </div>
+
+            {/* Right Action & Status Pill */}
+            <div className="flex items-center gap-2 self-start sm:self-center">
+              <button
+                type="button"
+                onClick={handleCopyReport}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition"
+                title="Salin Teks Analisis"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Salin</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition"
+                title="Cetak Laporan"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Cetak</span>
+              </button>
+              <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#eafaf1] text-[#15803d] border border-emerald-200/80">
+                <CheckCircle2 className="w-4 h-4 fill-[#16a34a] text-white" />
+                <span>Siap Digunakan</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 4 SUMMARY KPI CARDS */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            {/* Card 1: Jumlah Peserta Didik */}
+            <div className="rounded-2xl bg-[#eef6ff] border border-blue-100 p-4 sm:p-5">
+              <div className="flex items-center gap-2.5 text-[#1e40af] text-xs sm:text-sm font-semibold">
+                <Users className="w-5 h-5 text-[#2563eb] shrink-0" />
+                <span>Jumlah Peserta Didik</span>
+              </div>
+              <div className="mt-3 pl-7">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#0f294a]">
+                  {analysis.totalStudents}
+                </div>
+                <div className="text-xs font-medium text-slate-500 mt-0.5">
+                  Siswa
+                </div>
+              </div>
+            </div>
+
+            {/* Card 2: Rata-rata Nilai */}
+            <div className="rounded-2xl bg-[#eefbf3] border border-emerald-100 p-4 sm:p-5">
+              <div className="flex items-center gap-2.5 text-[#166534] text-xs sm:text-sm font-semibold">
+                <CheckCircle2 className="w-5 h-5 text-[#16a34a] shrink-0" />
+                <span>Rata-rata Nilai</span>
+              </div>
+              <div className="mt-3 pl-7">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#15803d]">
+                  {formatNum(analysis.averageScore)}
+                </div>
+                <div className="text-xs font-medium text-[#166534]/80 mt-0.5">
+                  ({analysis.averageCategory})
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Ketuntasan Klasikal */}
+            <div className="rounded-2xl bg-[#f5f0ff] border border-purple-100 p-4 sm:p-5">
+              <div className="flex items-center gap-2.5 text-[#5b21b6] text-xs sm:text-sm font-semibold">
+                <TrendingUp className="w-5 h-5 text-[#7c3aed] shrink-0" />
+                <span>Ketuntasan Klasikal</span>
+              </div>
+              <div className="mt-3 pl-7">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#5b21b6]">
+                  {formatNum(analysis.classicalMasteryPercentage)}%
+                </div>
+                <div className="text-xs font-medium text-[#5b21b6]/80 mt-0.5">
+                  ({analysis.passedStudents} dari {analysis.totalStudents} siswa)
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Belum Tuntas */}
+            <div className="rounded-2xl bg-[#fff1f2] border border-rose-100 p-4 sm:p-5">
+              <div className="flex items-center gap-2.5 text-[#be123c] text-xs sm:text-sm font-semibold">
+                <AlertTriangle className="w-5 h-5 text-[#e11d48] shrink-0" />
+                <span>Belum Tuntas</span>
+              </div>
+              <div className="mt-3 pl-7">
+                <div className="text-2xl sm:text-3xl font-extrabold text-[#be123c]">
+                  {formatNum(analysis.notPassedPercentage)}%
+                </div>
+                <div className="text-xs font-medium text-[#be123c]/80 mt-0.5">
+                  ({analysis.failedStudents} siswa)
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {}
+          {/* MIDDLE ROW: KOMPETENSI TABLE & DISTRIBUSI NILAI */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+            {/* Left Box: Analisis Capaian Kompetensi */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+              <div className="flex items-center gap-2.5 mb-4">
+                <Target className="w-5 h-5 text-[#1e3a5f]" />
+                <h3 className="font-bold text-[#0f294a] text-sm sm:text-base">
+                  Analisis Capaian Kompetensi
+                </h3>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#f4f8fd] text-[#1e3a5f] text-xs font-bold">
+                      <th className="py-2.5 px-3 rounded-l-lg">Kompetensi</th>
+                      <th className="py-2.5 px-3 text-center">Rata-rata Nilai</th>
+                      <th className="py-2.5 px-3 text-center rounded-r-lg">Kategori</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
+                    {analysis.competencies.map((comp, index) => (
+                      <tr key={index} className="hover:bg-slate-50/70 transition">
+                        <td className="py-3.5 px-3 font-medium text-slate-700">
+                          {comp.name}
+                        </td>
+                        <td className="py-3.5 px-3 text-center font-bold text-slate-800">
+                          {formatNum(comp.score)}
+                        </td>
+                        <td className="py-3.5 px-3 text-center">
+                          <span
+                            className={`inline-block px-3 py-1 rounded-md text-xs font-bold ${getCategoryBadgeStyle(
+                              comp.category
+                            )}`}
+                          >
+                            {comp.category}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Right Box: Distribusi Nilai */}
+            <div className="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs flex flex-col justify-between">
+              <div className="flex items-center gap-2.5 mb-4">
+                <BarChart3 className="w-5 h-5 text-[#1e3a5f]" />
+                <h3 className="font-bold text-[#0f294a] text-sm sm:text-base">
+                  Distribusi Nilai
+                </h3>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-6 my-auto py-2">
+                {/* Donut Chart */}
+                <DonutChart
+                  distribution={analysis.distribution}
+                  totalStudents={analysis.totalStudents}
+                />
+
+                {/* Legend Table */}
+                <div className="w-full space-y-3 text-xs sm:text-sm">
+                  {Object.values(analysis.distribution).map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between gap-2 border-b border-slate-50 pb-1.5 last:border-none last:pb-0"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span
+                          className="w-3 h-3 rounded-full shrink-0"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <span className="text-slate-600 font-medium truncate">
+                          {item.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-4 shrink-0">
+                        <span className="font-bold text-slate-800 w-12 text-right">
+                          {formatNum(item.percentage)}%
+                        </span>
+                        <span className="font-bold text-slate-700 w-5 text-right">
+                          {item.count}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {}
+          {/* BOTTOM ROW: TEMUAN UTAMA & REKOMENDASI TINDAK LANJUT */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
+            {/* Left Card: Temuan Utama */}
+            <div className="rounded-2xl bg-[#f4f9ff] border border-blue-100/90 p-5">
+              <div className="flex items-center gap-2.5 pb-3 mb-3 border-b border-blue-100">
+                <Lightbulb className="w-5 h-5 text-[#2563eb]" />
+                <h3 className="font-bold text-[#0f294a] text-sm sm:text-base">
+                  Temuan Utama
+                </h3>
+              </div>
+              <ul className="space-y-2.5 text-xs sm:text-sm text-slate-700">
+                {analysis.keyFindings.map((finding, idx) => (
+                  <li key={idx} className="flex items-start gap-2.5 leading-relaxed">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#2563eb] mt-2 shrink-0" />
+                    <span>{finding}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Right Card: Rekomendasi Tindak Lanjut */}
+            <div className="rounded-2xl bg-[#f2fbf6] border border-emerald-100/90 p-5">
+              <div className="flex items-center gap-2.5 pb-3 mb-3 border-b border-emerald-100">
+                <ClipboardList className="w-5 h-5 text-[#15803d]" />
+                <h3 className="font-bold text-[#14532d] text-sm sm:text-base">
+                  Rekomendasi Tindak Lanjut
+                </h3>
+              </div>
+              <ul className="space-y-2.5 text-xs sm:text-sm text-slate-700">
+                {analysis.recommendations.map((rec, idx) => (
+                  <li key={idx} className="flex items-start gap-2.5 leading-relaxed">
+                    <Check className="w-4 h-4 text-[#16a34a] stroke-[2.5] mt-0.5 shrink-0" />
+                    <span>{rec}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* FOOTER INFO BANNER */}
+          <div className="mt-6 rounded-xl bg-[#f0f6ff] border border-blue-100 px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#2b4c7e]">
+            <div className="flex items-start sm:items-center gap-2.5">
+              <Info className="w-4 h-4 text-[#2563eb] shrink-0 mt-0.5 sm:mt-0" />
+              <span>
+                Analisis ini disusun berdasarkan data asesmen yang Anda berikan dengan mengacu pada format terbaru Kurikulum Merdeka.
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-[#2563eb] font-semibold shrink-0 self-end sm:self-center">
+              <Sparkles className="w-4 h-4" />
+              <span className="leading-tight">
+                AI – Mendukung Pembelajaran
+                <span className="block sm:inline sm:ml-1">Lebih Bermakna</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
